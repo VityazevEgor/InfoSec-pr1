@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.db
+.venv/
+venv/
+findings.json
+sast_results.json
