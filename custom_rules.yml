@@ -1,0 +1,68 @@
+rules:
+  # Правило 1: Запрет использования eval()
+  - id: no-eval
+    pattern: eval(...)
+    message: "Использование eval() крайне опасно, приводит к RCE (выполнению произвольного кода)"
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-94"
+   
+  # Правило 2: Запрет использования функции os.system()
+  - id: no-os-system
+    pattern: os.system(...)
+    message: "Использование os.system() небезопасно, возможна командная инъекция"
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-78"
+   
+  # Правило 3: Поиск хардкода токенов по регулярному выражению
+  - id: hardcoded-token-pattern
+    pattern-regex: (?i)(?:[a-z0-9_]*(?:token|secret|key|password)[a-z0-9_]*)\s*=\s*['"][^'"]+['"]
+    message: "Обнаружен возможный хардкод секрета или учетных данных в коде"
+    languages:
+      - python
+    severity: WARNING
+    metadata:
+      cwe: "CWE-798"
+   
+  # Правило 4: Запрет использования функции pickle.loads()
+  - id: no-pickle
+    pattern: pickle.loads(...)
+    message: "pickle.loads() опасен при обработке непроверенных данных (небезопасная десериализация)"
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-502"
+   
+  # Правило 5: Запрет запуска в режиме отладки в продакшене
+  - id: no-debug-mode
+    pattern-either:
+      - pattern: app.run(debug=True)
+      - pattern: app.run(debug=True, ...)
+      - pattern: app.run(..., debug=True, ...)
+    message: "Режим отладки Flask (debug=True) включен в коде приложения"
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-489"
+
+  # Правило 6: Taint-анализ (отслеживание потока данных от источников к стокам)
+  - id: taint-untrusted-input
+    mode: taint
+    pattern-sources:
+      - pattern: request.args.get(...)
+    pattern-sinks:
+      - pattern: subprocess.check_output(...)
+      - pattern: eval(...)
+    message: "Поток пользовательских данных попадает напрямую в опасный сток (Sink) без валидации"
+    languages:
+      - python
+    severity: ERROR
+    metadata:
+      cwe: "CWE-20"
