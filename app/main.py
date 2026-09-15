@@ -1,6 +1,8 @@
 from flask import Flask, request, render_template, jsonify
 import subprocess
 import os
+import ast
+import re
 from database import init_db, search_products
 from auth import SECRET_KEY, hash_password, hash_token, verify_token
 
@@ -23,18 +25,19 @@ def api_search():
 @app.route('/api/ping')
 def api_ping():
     host = request.args.get('host', '127.0.0.1')
-    # Уязвимость 5: Внедрение команд операционной системы (Command Injection, CWE-77)
-    cmd = f"ping -c 1 {host}"
-    output = subprocess.check_output(cmd, shell=True).decode('utf-8', errors='ignore')
+    # Безопасный вызов subprocess с валидацией ввода и shell=False
+    if not re.match(r'^[a-zA-Z0-9.-]+$', host):
+        return jsonify({'error': 'Invalid host'}), 400
+    output = subprocess.check_output(['ping', '-c', '1', host], shell=False).decode('utf-8', errors='ignore')
     return jsonify({'output': output})
 
 @app.route('/api/calc')
 def api_calc():
     expr = request.args.get('expr', '1+1')
-    # Уязвимость 6: Выполнение произвольного кода через eval (CWE-94)
-    result = eval(expr)
+    # Безопасное вычисление константных выражений через ast.literal_eval
+    result = ast.literal_eval(expr)
     return jsonify({'result': result})
 
 if __name__ == '__main__':
-    # Уязвимость 7: Запуск с включенным отладчиком и привязка к 0.0.0.0 (CWE-489)
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Запуск приложения без режима отладки и привязка к localhost
+    app.run(debug=False, host='127.0.0.1', port=5000)

@@ -31,9 +31,9 @@ def init_db():
 def search_products(query):
     conn = get_connection()
     cursor = conn.cursor()
-    # Уязвимость 1: SQL-инъекция через прямую конкатенацию строк (CWE-89)
-    sql = "SELECT * FROM products WHERE name LIKE '%" + query + "%'"
-    cursor.execute(sql)
+    # Безопасный параметризованный SQL-запрос
+    sql = "SELECT * FROM products WHERE name LIKE ?"
+    cursor.execute(sql, (f"%{query}%",))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
