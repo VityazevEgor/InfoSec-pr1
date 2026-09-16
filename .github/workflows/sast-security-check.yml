@@ -55,34 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 -c "
-          import os, json, urllib.request
-          token = os.environ.get('GH_TOKEN')
-          repo = '${{ github.repository }}'
-          sha = '${{ github.sha }}'[:7]
-          ref = '${{ github.ref_name }}'
-          try:
-              with open('sast_results.json') as f:
-                  data = json.load(f)
-              res = data.get('results', [])
-              count = len(res)
-              vulns = [f'- **{r.get("check_id")}** (\`{r.get("extra",{}).get("severity")}\`) в \`{r.get("path")}:{r.get("start",{}).get("line")}\`' for r in res[:5]]
-              items = '\n'.join(vulns)
-          except Exception:
-              count, items = 'N/A', ''
-          title = f'[SAST] Критические уязвимости в коммите {sha} ({ref})'
-          body = f'### [SAST Alert] Обнаружены дефекты безопасности\n\nВ коммите \`{sha}\` (ветка \`{ref}\`) обнаружено уязвимостей: **{count}**.\n\n### Дефекты:\n{items}\n\n> Полный отчёт сохранён в артефактах сборки (\`sast-results\`).'
-          req = urllib.request.Request(
-              f'https://api.github.com/repos/{repo}/issues',
-              data=json.dumps({'title': title, 'body': body, 'labels': ['security', 'bug']}).encode('utf-8'),
-              headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'Semgrep-CI'}
-          )
-          try:
-              with urllib.request.urlopen(req) as resp:
-                  print('[SUCCESS] Issue создан:', json.loads(resp.read().decode('utf-8')).get('html_url'))
-          except Exception as e:
-              print('[WARNING] Ошибка создания Issue:', e)
-          "
+          python3 scripts/create_issue.py
       
       - name: Check for Critical Issues
         if: steps.scan.outcome == 'failure'
