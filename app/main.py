@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, jsonify
 import subprocess
 import os
 import ast
+import operator
 import re
 from database import init_db, search_products
 from auth import SECRET_KEY, hash_password, hash_token, verify_token
@@ -11,6 +12,15 @@ app.config['SECRET_KEY'] = SECRET_KEY
 
 # Инициализация базы данных
 init_db()
+
+OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv}
+
+def safe_calc(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
+    if isinstance(node, ast.BinOp) and type(node.op) in OPS:
+        return OPS[type(node.op)](safe_calc(node.left), safe_calc(node.right))
+    raise ValueError
 
 @app.route('/')
 def index():
@@ -33,10 +43,13 @@ def api_ping():
 
 @app.route('/api/calc')
 def api_calc():
-    expr = request.args.get('expr', '1+1')
-    # Безопасное вычисление константных выражений через ast.literal_eval
-    result = ast.literal_eval(expr)
-    return jsonify({'result': result})
+    expr = request.args.get('expr', '1+1').replace(' ', '+')
+    # Безопасное вычисление арифметических выражений через разбор AST-дерева
+    try:
+        result = safe_calc(ast.parse(expr, mode='eval').body)
+        return jsonify({'result': result})
+    except Exception:
+        return jsonify({'error': 'Invalid expression'}), 400
 
 if __name__ == '__main__':
     # Запуск приложения без режима отладки и привязка к localhost
