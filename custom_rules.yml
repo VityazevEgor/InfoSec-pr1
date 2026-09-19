@@ -7,7 +7,7 @@ rules:
       - python
     severity: ERROR
     metadata:
-      cwe: "CWE-94"
+      cwe: "CWE-95"
    
   # Правило 2: Запрет использования функции os.system()
   - id: no-os-system
