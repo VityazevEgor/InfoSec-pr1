@@ -13,7 +13,7 @@ def run_quality_gate():
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"
     
-    cmd = ["semgrep", "scan", "--config", "auto", "--severity", "ERROR", app_dir]
+    cmd = ["semgrep", "scan", "--config", "auto", "--severity", "ERROR", "--error", app_dir]
     # Попробуем использовать путь из semgrep-env
     semgrep_exe = os.path.join(project_root, "..", "semgrep-env", "Scripts", "semgrep.exe")
     if sys.platform == "win32" and os.path.exists(semgrep_exe):
