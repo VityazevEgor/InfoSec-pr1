@@ -1,8 +1,8 @@
 import hashlib
 import os
 
-# Уязвимость 2: Хардкод секретного ключа в исходном коде (CWE-798)
-SECRET_KEY = "hardcoded-super-secret-token-12345"
+# Безопасное получение секретного ключа из переменной окружения (CWE-798)
+SECRET_KEY = os.environ.get('SECRET_KEY', 'default-dev-secret-key')
 
 def hash_password(password):
     # Безопасный криптографический алгоритм SHA-256
